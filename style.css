@@ -1,0 +1,59 @@
+/* One stylesheet for sleevenotes.ink. No build step, no framework. */
+:root {
+  --ink: #1c1917;
+  --dim: #57534e;
+  --faint: #a8a29e;
+  --paper: #faf8f5;
+  --card: #ffffff;
+  --rule: #e7e2db;
+  --accent: #9B2226;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --ink: #ece7e1; --dim: #a8a29e; --faint: #6b6560;
+    --paper: #14100e; --card: #1c1917; --rule: #2e2926; --accent: #e07a7e;
+  }
+}
+:root[data-theme="dark"] {
+  --ink: #ece7e1; --dim: #a8a29e; --faint: #6b6560;
+  --paper: #14100e; --card: #1c1917; --rule: #2e2926; --accent: #e07a7e;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font: 400 17px/1.65 "IBM Plex Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+.wrap { max-width: 40rem; margin: 0 auto; padding: 4rem 1.5rem 6rem; }
+h1, h2, h3 { font-family: Fraunces, Georgia, "Times New Roman", serif; font-weight: 600; line-height: 1.2; }
+h1 { font-size: clamp(2rem, 6vw, 2.9rem); margin: 0 0 .4rem; letter-spacing: -0.01em; }
+h2 { font-size: 1.4rem; margin: 2.75rem 0 .6rem; }
+h3 { font-size: 1.1rem; margin: 1.75rem 0 .35rem; }
+p, li { color: var(--ink); }
+a { color: var(--accent); text-decoration-thickness: 1px; text-underline-offset: 2px; }
+.lede { font-size: 1.15rem; color: var(--dim); margin: 0 0 2rem; }
+.eyebrow {
+  font-size: .78rem; letter-spacing: .14em; text-transform: uppercase;
+  color: var(--faint); margin: 0 0 1.5rem;
+}
+.eyebrow a { color: var(--faint); text-decoration: none; }
+.eyebrow a:hover { color: var(--accent); }
+hr { border: 0; border-top: 1px solid var(--rule); margin: 3rem 0; }
+ol, ul { padding-left: 1.25rem; }
+li { margin: .5rem 0; }
+code {
+  font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: .9em; background: var(--card); border: 1px solid var(--rule);
+  border-radius: 4px; padding: .08em .35em;
+}
+.note {
+  background: var(--card); border: 1px solid var(--rule); border-left: 3px solid var(--accent);
+  border-radius: 6px; padding: 1rem 1.25rem; margin: 1.5rem 0;
+}
+.note p:first-child { margin-top: 0; }
+.note p:last-child { margin-bottom: 0; }
+footer { margin-top: 4rem; padding-top: 1.5rem; border-top: 1px solid var(--rule);
+         color: var(--faint); font-size: .9rem; }
+footer a { color: var(--faint); }

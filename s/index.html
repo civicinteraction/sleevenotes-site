@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sleevenotes</title>
+<style>
+  :root{
+    --bg:#faf9f7; --card:#ffffff; --ink:#1c1b19; --ink2:#5f5e5a; --ink3:#8b8a84;
+    --line:#e3e1db; --ok-bg:#eaf3de; --ok-ink:#3b6d11; --warn-bg:#faeeda; --warn-ink:#854f0b;
+    --accent:#185fa5;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#151513; --card:#201f1d; --ink:#f2f1ee; --ink2:#a8a69f; --ink3:#77756e;
+      --line:#333230; --ok-bg:#173404; --ok-ink:#c0dd97; --warn-bg:#412402; --warn-ink:#fac775;
+      --accent:#85b7eb;
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#151513; --card:#201f1d; --ink:#f2f1ee; --ink2:#a8a69f; --ink3:#77756e;
+    --line:#333230; --ok-bg:#173404; --ok-ink:#c0dd97; --warn-bg:#412402; --warn-ink:#fac775;
+    --accent:#85b7eb;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font:400 17px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;padding:20px 16px 40px}
+  .wrap{max-width:420px;margin:0 auto}
+  .from{font-size:14px;color:var(--ink2);margin:0 0 12px;line-height:1.45}
+  .from b{font-weight:500;color:var(--ink)}
+  .quote{margin:0 0 14px;padding:10px 14px;border-left:3px solid var(--accent);
+    background:var(--card);font-size:15px;line-height:1.5;color:var(--ink)}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:16px;overflow:hidden}
+  .hd{padding:14px 16px 12px;border-bottom:1px solid var(--line);
+    display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+  .hd .a{font-size:14px;color:var(--ink2);margin:0 0 2px}
+  .hd .t{font-size:19px;font-weight:500;margin:0}
+  .hd .y{font-size:15px;color:var(--ink2);white-space:nowrap}
+  .sec{font-size:12px;color:var(--ink3);letter-spacing:.05em;margin:14px 16px 4px}
+  .row{display:flex;justify-content:space-between;align-items:baseline;gap:12px;
+    padding:7px 16px}
+  .row .n{font-size:17px}
+  .row .i{font-size:13px;color:var(--ink2);text-align:right}
+  .row.solo .n::before{content:"";display:inline-block;width:5px;height:5px;border-radius:50%;
+    background:var(--accent);vertical-align:middle;margin-right:7px}
+  .soloists{background:color-mix(in srgb,var(--accent) 7%,transparent);padding-bottom:6px}
+  .foot{margin-top:14px;padding:11px 16px;border-top:1px solid var(--line);
+    display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+  .tier{font-size:12px;padding:3px 9px;border-radius:7px;background:var(--ok-bg);color:var(--ok-ink)}
+  .tier.album,.tier.uncertain{background:var(--warn-bg);color:var(--warn-ink)}
+  .why{font-size:12px;color:var(--ink3);flex:1;min-width:140px}
+  .note{margin:9px 16px 0;font-size:12px;color:var(--ink3);line-height:1.5}
+  .btn{display:block;margin:14px 0 0;padding:13px;border-radius:12px;text-align:center;
+    text-decoration:none;font-size:16px;font-weight:500;background:var(--ink);color:var(--bg)}
+  .btn.alt{background:transparent;color:var(--accent);border:1px solid var(--line);font-weight:400;margin-top:9px}
+  .links{margin:18px 0 0;padding:0;list-style:none}
+  .also{margin:9px 0 0;font-size:14px;color:var(--ink3);text-align:center}
+  .also a{color:var(--accent);text-decoration:none}
+  .links li{margin:0 0 9px}
+  .links a{color:var(--accent);text-decoration:none;font-size:15px}
+  .links span{display:block;font-size:12px;color:var(--ink3)}
+  .empty{color:var(--ink2);font-size:15px;text-align:center;padding:30px 0}
+</style>
+</head>
+<body>
+<div class="wrap" id="wrap"></div>
+<script>
+var REEDS=/clarinet|saxophone|\balto\b|\btenor\b|baritone|soprano|bass clarinet|flute|oboe|bassoon/i;
+var BRASS=/trumpet|cornet|trombone|tuba|flugelhorn|horn\b/i;
+var RHYTHM=/piano|bass\b|drums|guitar|banjo|vibraphone|percussion|organ|celesta|conga|bongo|timbales/i;
+
+function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){
+  return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];});}
+
+function parse(){
+  var h=location.hash.replace(/^#/,""); var o={};
+  if(!h) return null;
+  h.split("&").forEach(function(kv){
+    var i=kv.indexOf("="); if(i<0) return;
+    o[decodeURIComponent(kv.slice(0,i))]=decodeURIComponent(kv.slice(i+1).replace(/\+/g," "));
+  });
+  return o.t?o:null;
+}
+function people(s){
+  if(!s) return [];
+  return s.split("!").filter(Boolean).map(function(p){
+    var b=p.split("~"); return {name:b[0]||"", inst:b[1]||""};
+  });
+}
+function mmss(sec){
+  sec=parseInt(sec,10); if(isNaN(sec)||sec<0) return null;
+  return Math.floor(sec/60)+":"+String(sec%60).padStart(2,"0");
+}
+function group(list){
+  var g={reeds:[],brass:[],rhythm:[],other:[]};
+  list.forEach(function(p){
+    var i=p.inst||"";
+    if(REEDS.test(i)) g.reeds.push(p);
+    else if(BRASS.test(i)) g.brass.push(p);
+    else if(RHYTHM.test(i)) g.rhythm.push(p);
+    else g.other.push(p);
+  });
+  return g;
+}
+function rows(list,solo){
+  return list.map(function(p){
+    return '<div class="row'+(solo?' solo':'')+'"><span class="n">'+esc(p.name)+
+      '</span><span class="i">'+esc(p.inst)+'</span></div>';
+  }).join("");
+}
+var SERVICES=[
+  {id:"apple", name:"Apple Music", url:function(d){
+     return d.k ? "https://music.apple.com/album/"+encodeURIComponent(d.k)
+                : "https://music.apple.com/search?term="+encodeURIComponent(q(d));}},
+  {id:"spotify", name:"Spotify", url:function(d){
+     return "https://open.spotify.com/search/"+encodeURIComponent(q(d));}},
+  {id:"youtube", name:"YouTube", url:function(d){
+     return "https://www.youtube.com/results?search_query="+encodeURIComponent(q(d));}}
+];
+function q(d){return ((d.a||"")+" "+(d.t||"")).trim();}
+function preferred(){
+  try{ return localStorage.getItem("listenOn")||"apple"; }catch(e){ return "apple"; }
+}
+function setPreferred(id){
+  try{ localStorage.setItem("listenOn",id); }catch(e){}
+}
+function render(){
+  var d=parse(), w=document.getElementById("wrap");
+  if(!d){ w.innerHTML='<p class="empty">No track in this link.</p>'; return; }
+
+  var band=people(d.p), solos=people(d.sl);
+  var soloNames={}; solos.forEach(function(p){soloNames[p.name]=1;});
+  var rest=band.filter(function(p){return !soloNames[p.name];});
+  var g=group(rest);
+  var at=mmss(d.ts);
+
+  var intro="";
+  if(d.f){
+    intro='<p class="from"><b>'+esc(d.f)+'</b> sent you this';
+    if(d.m) intro+=' &mdash; listen to <b>'+esc(d.m)+'</b>';
+    if(at) intro+=(d.m?' at ':' &mdash; start at ')+'<b>'+at+'</b>';
+    intro+='.</p>';
+  }
+  if(d.n) intro+='<p class="quote">'+esc(d.n)+'</p>';
+
+  var tier=(d.c||"").toLowerCase();
+  var tierLabel={confirmed:"Confirmed",likely:"Likely",album:"Album credit",uncertain:"Uncertain"}[tier];
+  var tierWhy={confirmed:"two sources agree",likely:"one reliable source",
+    album:"credited to the album, may not be exact for this track",
+    uncertain:"sources disagree"}[tier];
+
+  var html=intro+'<div class="card"><div class="hd"><div>'+
+    '<p class="a">'+esc(d.a)+'</p><p class="t">'+esc(d.t)+'</p></div>'+
+    (d.y?'<span class="y">'+esc(d.y)+'</span>':'')+'</div>';
+
+  if(solos.length) html+='<div class="soloists"><p class="sec">soloists</p>'+rows(solos,true)+'</div>';
+  if(g.reeds.length)  html+='<p class="sec">reeds</p>'+rows(g.reeds);
+  if(g.brass.length)  html+='<p class="sec">brass</p>'+rows(g.brass);
+  if(g.rhythm.length) html+='<p class="sec">rhythm</p>'+rows(g.rhythm);
+  if(g.other.length)  html+='<p class="sec">also</p>'+rows(g.other);
+  if(!band.length && !solos.length)
+    html+='<p class="note" style="margin:14px 16px">No personnel travelled with this link. Open in the app to look them up.</p>';
+
+  if(tierLabel) html+='<div class="foot"><span class="tier '+tier+'">'+tierLabel+
+    '</span><span class="why">'+esc(tierWhy)+'</span></div>';
+  if(d.al) html+='<p class="note">from <em>'+esc(d.al)+'</em></p>';
+  html+='</div>';
+
+  var pref=preferred();
+  var main=SERVICES.filter(function(s){return s.id===pref;})[0]||SERVICES[0];
+  var others=SERVICES.filter(function(s){return s.id!==main.id;});
+  html+='<a class="btn" href="'+main.url(d)+'">Listen on '+main.name+'</a>';
+  html+='<p class="also">also on '+others.map(function(s){
+    return '<a href="'+s.url(d)+'" data-svc="'+s.id+'">'+s.name+'</a>';
+  }).join(' &middot; ')+'</p>';
+  html+='<a class="btn alt" href="sleevenotes://open'+location.hash+'">Open in the app</a>';
+
+  var sq=encodeURIComponent((d.a||"")+" "+(d.al||d.t||""));
+  html+='<ul class="links">'+
+    '<li><a href="https://en.wikipedia.org/w/index.php?search='+sq+'">Wikipedia</a>'+
+    '<span>background on the record</span></li>'+
+    '<li><a href="https://www.discogs.com/search/?q='+sq+'&type=release">Discogs</a>'+
+    '<span>pressings and full credits</span></li></ul>';
+
+  w.innerHTML=html;
+  var alts=w.querySelectorAll(".also a[data-svc]");
+  for(var i=0;i<alts.length;i++){
+    alts[i].addEventListener("click",function(){ setPreferred(this.getAttribute("data-svc")); });
+  }
+  document.title=(d.t||"Shared track")+" — credits";
+}
+render();
+window.addEventListener("hashchange",render);
+</script>
+</body>
+</html>
